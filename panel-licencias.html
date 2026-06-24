@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>DIESEL — Panel de Licencias</title>
+<style>
+:root{
+  --bg:#0d1117;--bg2:#161b22;--surface:#21262d;--surface2:#30363d;
+  --border:#30363d;--border2:#444c56;
+  --accent:#238636;--accent2:#2ea043;
+  --blue:#1f6feb;--blue2:#388bfd;
+  --red:#da3633;--amber:#d29922;
+  --text:#e6edf3;--text2:#8b949e;--text3:#6e7681;
+  --sans:'Inter',system-ui,sans-serif;--mono:'JetBrains Mono',monospace;
+  --r:6px;--r2:10px
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px;min-height:100vh}
+.hidden{display:none!important}
+
+/* LOGIN */
+#login-wrap{display:flex;align-items:center;justify-content:center;min-height:100vh;padding:24px}
+.login-box{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);padding:32px;width:100%;max-width:360px}
+.login-box h1{font-size:18px;font-weight:800;margin-bottom:4px}
+.login-box p{font-size:12px;color:var(--text2);margin-bottom:24px}
+.fg{margin-bottom:14px}
+.fg label{display:block;font-size:11px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:5px}
+.fg input,.fg select,.fg textarea{width:100%;padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:14px;font-family:var(--sans)}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--blue2)}
+.fg textarea{min-height:80px;resize:vertical}
+.btn-prim{width:100%;padding:10px;background:var(--accent);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer}
+.btn-prim:hover{background:var(--accent2)}
+.err{color:#f85149;font-size:12px;margin-top:8px;display:none}
+
+/* APP */
+#app-wrap{display:none}
+.header{background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 24px;display:flex;align-items:center;justify-content:space-between}
+.header h1{font-size:15px;font-weight:800}
+.header p{font-size:11px;color:var(--text2)}
+.btn-salir{padding:5px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-size:11px;cursor:pointer}
+
+.main{padding:24px;max-width:1200px;margin:0 auto}
+
+/* STATS */
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px}
+.stat{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r);padding:16px}
+.stat-num{font-size:28px;font-weight:800;color:var(--blue2);font-family:var(--mono)}
+.stat-lbl{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:2px}
+.stat.green .stat-num{color:var(--accent2)}
+.stat.red .stat-num{color:#f85149}
+.stat.amber .stat-num{color:var(--amber)}
+
+/* ACTIONS BAR */
+.actions-bar{display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;align-items:center}
+.search-inp{padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:13px;width:260px}
+.search-inp:focus{outline:none;border-color:var(--blue2)}
+.btn-nuevo{padding:8px 16px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:12px;font-weight:700;cursor:pointer}
+.btn-nuevo:hover{background:var(--blue2)}
+.btn-refresh{padding:8px 12px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text2);font-size:12px;cursor:pointer}
+
+/* TABLE */
+.table-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:var(--r2);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 14px;text-align:left;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;background:var(--surface);border-bottom:1px solid var(--border)}
+td{padding:11px 14px;border-bottom:1px solid var(--border);font-size:13px;vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(255,255,255,.03)}
+.codigo-tag{font-family:var(--mono);font-size:12px;background:var(--surface2);padding:3px 8px;border-radius:4px;color:var(--blue2);cursor:pointer;user-select:all}
+.badge{padding:2px 8px;border-radius:4px;font-size:11px;font-weight:700;text-transform:uppercase}
+.badge.activa{background:rgba(35,134,54,.2);color:var(--accent2)}
+.badge.inactiva{background:rgba(218,54,51,.15);color:#f85149}
+.badge.caducada{background:rgba(210,153,34,.15);color:var(--amber)}
+.dias-restantes{font-size:11px;color:var(--text3);margin-top:2px}
+.dias-ok{color:var(--accent2)}
+.dias-warn{color:var(--amber)}
+.dias-bad{color:#f85149}
+.acciones{display:flex;gap:6px}
+.btn-edit{padding:4px 10px;background:rgba(31,111,235,.15);color:var(--blue2);border:1px solid rgba(31,111,235,.3);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+.btn-toggle{padding:4px 10px;border:1px solid;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+.btn-toggle.desactivar{background:rgba(218,54,51,.1);color:#f85149;border-color:rgba(218,54,51,.3)}
+.btn-toggle.activar{background:rgba(35,134,54,.1);color:var(--accent2);border-color:rgba(35,134,54,.3)}
+.btn-del{padding:4px 10px;background:rgba(218,54,51,.1);color:#f85149;border:1px solid rgba(218,54,51,.3);border-radius:4px;font-size:11px;font-weight:700;cursor:pointer}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:100;display:flex;align-items:center;justify-content:center;padding:20px}
+.modal{background:var(--bg2);border:1px solid var(--border2);border-radius:var(--r2);padding:24px;width:100%;max-width:500px;max-height:90vh;overflow-y:auto}
+.modal h2{font-size:15px;font-weight:700;margin-bottom:16px;padding-bottom:10px;border-bottom:1px solid var(--border)}
+.modal-btns{display:flex;gap:10px;margin-top:16px}
+.btn-cancel{flex:1;padding:10px;background:var(--surface);border:1px solid var(--border2);border-radius:var(--r);color:var(--text);font-size:13px;cursor:pointer}
+.btn-ok{flex:1;padding:10px;background:var(--blue);color:#fff;border:none;border-radius:var(--r);font-size:13px;font-weight:700;cursor:pointer}
+.btn-ok:hover{background:var(--blue2)}
+.modulos-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px}
+.modulo-check{display:flex;align-items:center;gap:8px;padding:7px 10px;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);cursor:pointer}
+.modulo-check input{cursor:pointer}
+.modulo-check span{font-size:12px;font-weight:600}
+
+/* LICENCIA CREADA */
+.lic-creada{background:rgba(35,134,54,.1);border:1px solid rgba(35,134,54,.3);border-radius:var(--r);padding:16px;margin-top:12px}
+.lic-codigo{font-family:var(--mono);font-size:20px;font-weight:800;color:var(--accent2);text-align:center;padding:10px;background:var(--surface);border-radius:var(--r);margin:8px 0;cursor:pointer;user-select:all}
+.lic-creada p{font-size:12px;color:var(--text2);text-align:center}
+
+/* TOAST */
+.toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);color:var(--text);padding:10px 18px;border-radius:var(--r);font-size:13px;font-weight:600;z-index:500;animation:toastIn .2s ease;border-left:3px solid var(--accent2)}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.empty{text-align:center;padding:48px;color:var(--text3)}
+.loading-row td{text-align:center;padding:32px;color:var(--text3)}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login-wrap">
+  <div class="login-box">
+    <h1>🔑 Diesel Licencias</h1>
+    <p>Panel de administración — acceso restringido</p>
+    <div class="fg">
+      <label>Clave de administrador</label>
+      <input type="password" id="admin-key-inp" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <div class="fg">
+      <label>URL del servidor</label>
+      <input type="url" id="server-url-inp" placeholder="https://diesel-licencias.onrender.com" value="">
+    </div>
+    <button class="btn-prim" id="btn-login">Acceder</button>
+    <div class="err" id="login-err">Clave incorrecta o servidor no disponible</div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app-wrap">
+  <div class="header">
+    <div>
+      <h1>🔑 Diesel Licencias</h1>
+      <p id="server-label"></p>
+    </div>
+    <button class="btn-salir" id="btn-salir">Cerrar sesión</button>
+  </div>
+  <div class="main">
+    <div class="stats" id="stats-grid">
+      <div class="stat"><div class="stat-num" id="st-total">—</div><div class="stat-lbl">Total licencias</div></div>
+      <div class="stat green"><div class="stat-num" id="st-activas">—</div><div class="stat-lbl">Activas</div></div>
+      <div class="stat amber"><div class="stat-num" id="st-caducan">—</div><div class="stat-lbl">Caducan en 30 días</div></div>
+      <div class="stat red"><div class="stat-num" id="st-inactivas">—</div><div class="stat-lbl">Inactivas/Caducadas</div></div>
+    </div>
+    <div class="actions-bar">
+      <input class="search-inp" type="search" id="search-inp" placeholder="Buscar cliente, dominio...">
+      <button class="btn-nuevo" id="btn-nueva-lic">+ Nueva licencia</button>
+      <button class="btn-refresh" id="btn-refresh">🔄 Actualizar</button>
+    </div>
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Cliente</th>
+            <th>Dominio</th>
+            <th>Estado</th>
+            <th>Caducidad</th>
+            <th>Límites</th>
+            <th>Último acceso</th>
+            <th>Acciones</th>
+          </tr>
+        </thead>
+        <tbody id="tabla-body">
+          <tr class="loading-row"><td colspan="8">Cargando...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: Nueva/Editar licencia -->
+<div class="modal-overlay hidden" id="modal-lic">
+  <div class="modal">
+    <h2 id="modal-titulo">Nueva licencia</h2>
+    <div class="fg"><label>Nombre del cliente / Autoescuela</label><input type="text" id="f-cliente" placeholder="Autoescuela García"></div>
+    <div class="fg"><label>Email del cliente</label><input type="email" id="f-email" placeholder="garcia@autoescuela.com"></div>
+    <div class="fg"><label>Dominio autorizado</label><input type="text" id="f-dominio" placeholder="ortumik-cyber.github.io/diesel-garcia"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      <div class="fg"><label>Días de validez</label><input type="number" id="f-dias" value="365" min="1" max="3650"></div>
+      <div class="fg"><label>Máx. profesores</label><input type="number" id="f-profs" value="5" min="1" max="50"></div>
+      <div class="fg"><label>Máx. alumnos</label><input type="number" id="f-alumnos" value="200" min="1" max="9999"></div>
+    </div>
+    <div class="fg">
+      <label>Módulos incluidos</label>
+      <div class="modulos-grid">
+        <label class="modulo-check"><input type="checkbox" value="calendario" checked><span>📅 Calendario</span></label>
+        <label class="modulo-check"><input type="checkbox" value="firmas" checked><span>✍️ Firmas</span></label>
+        <label class="modulo-check"><input type="checkbox" value="dashboard" checked><span>📊 Dashboard</span></label>
+        <label class="modulo-check"><input type="checkbox" value="whatsapp" checked><span>📱 WhatsApp</span></label>
+        <label class="modulo-check"><input type="checkbox" value="onedrive" checked><span>☁️ OneDrive</span></label>
+        <label class="modulo-check"><input type="checkbox" value="backup" checked><span>💾 Backup</span></label>
+      </div>
+    </div>
+    <div class="lic-creada hidden" id="lic-creada-wrap">
+      <p>✅ Licencia creada. Código para el cliente:</p>
+      <div class="lic-codigo" id="lic-codigo-nuevo" title="Clic para copiar"></div>
+      <p>Clic en el código para copiar · Envíalo al cliente</p>
+    </div>
+    <div class="modal-btns">
+      <button class="btn-cancel" id="btn-modal-cancel">Cerrar</button>
+      <button class="btn-ok" id="btn-modal-ok">Crear licencia</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var SERVER_URL = '';
+var ADMIN_KEY  = '';
+var _licencias = [];
+var _editCodigo = null;
+
+// ── Login ──────────────────────────────────────────────────
+document.getElementById('btn-login').onclick = async function(){
+  var key = document.getElementById('admin-key-inp').value.trim();
+  var url = document.getElementById('server-url-inp').value.trim().replace(/\/$/, '');
+  var errEl = document.getElementById('login-err');
+  errEl.style.display = 'none';
+  if(!key || !url){ errEl.textContent='Rellena todos los campos'; errEl.style.display='block'; return; }
+  try{
+    var resp = await fetch(url+'/admin/listar?admin_key='+encodeURIComponent(key));
+    if(!resp.ok){ errEl.textContent='Clave incorrecta'; errEl.style.display='block'; return; }
+    SERVER_URL = url; ADMIN_KEY = key;
+    localStorage.setItem('dhl_url', url);
+    localStorage.setItem('dhl_key', key);
+    document.getElementById('server-label').textContent = url;
+    document.getElementById('login-wrap').style.display = 'none';
+    document.getElementById('app-wrap').style.display = 'block';
+    var data = await resp.json();
+    _licencias = data.licencias || [];
+    renderTabla();
+    actualizarStats();
+  }catch(e){
+    errEl.textContent = 'No se pudo conectar al servidor: '+e.message;
+    errEl.style.display = 'block';
+  }
+};
+document.getElementById('admin-key-inp').onkeydown = function(e){ if(e.key==='Enter') document.getElementById('btn-login').click(); };
+
+// Restaurar sesión
+(function(){
+  var url = localStorage.getItem('dhl_url');
+  var key = localStorage.getItem('dhl_key');
+  if(url) document.getElementById('server-url-inp').value = url;
+})();
+
+document.getElementById('btn-salir').onclick = function(){
+  localStorage.removeItem('dhl_key');
+  location.reload();
+};
+
+// ── Cargar datos ───────────────────────────────────────────
+async function cargarLicencias(){
+  document.getElementById('tabla-body').innerHTML = '<tr class="loading-row"><td colspan="8">Cargando...</td></tr>';
+  try{
+    var resp = await fetch(SERVER_URL+'/admin/listar?admin_key='+encodeURIComponent(ADMIN_KEY));
+    var data = await resp.json();
+    _licencias = data.licencias || [];
+    renderTabla();
+    actualizarStats();
+  }catch(e){ toast('Error al cargar: '+e.message); }
+}
+document.getElementById('btn-refresh').onclick = cargarLicencias;
+
+// ── Stats ──────────────────────────────────────────────────
+function actualizarStats(){
+  var hoy = new Date();
+  var en30 = new Date(hoy.getTime() + 30*24*60*60*1000);
+  var total = _licencias.length;
+  var activas = _licencias.filter(function(l){ return l.activa && !esCaducada(l); }).length;
+  var caducan = _licencias.filter(function(l){ return l.activa && !esCaducada(l) && l.expira_en && new Date(l.expira_en) < en30; }).length;
+  var inactivas = total - activas;
+  document.getElementById('st-total').textContent = total;
+  document.getElementById('st-activas').textContent = activas;
+  document.getElementById('st-caducan').textContent = caducan;
+  document.getElementById('st-inactivas').textContent = inactivas;
+}
+
+function esCaducada(l){
+  if(!l.expira_en) return false;
+  return new Date(l.expira_en) < new Date();
+}
+
+function diasRestantes(expira_en){
+  if(!expira_en) return null;
+  var diff = new Date(expira_en) - new Date();
+  return Math.ceil(diff / (1000*60*60*24));
+}
+
+// ── Tabla ──────────────────────────────────────────────────
+var _filtro = '';
+document.getElementById('search-inp').oninput = function(){ _filtro=this.value.toLowerCase(); renderTabla(); };
+
+function renderTabla(){
+  var fil = _licencias.filter(function(l){
+    return !_filtro ||
+      (l.cliente_nombre||'').toLowerCase().includes(_filtro) ||
+      (l.dominio||'').toLowerCase().includes(_filtro) ||
+      (l.codigo||'').toLowerCase().includes(_filtro);
+  });
+
+  if(!fil.length){
+    document.getElementById('tabla-body').innerHTML = '<tr class="loading-row"><td colspan="8">Sin licencias</td></tr>';
+    return;
+  }
+
+  document.getElementById('tabla-body').innerHTML = fil.map(function(l){
+    var caducada = esCaducada(l);
+    var badge = !l.activa ? '<span class="badge inactiva">Inactiva</span>'
+      : caducada ? '<span class="badge caducada">Caducada</span>'
+      : '<span class="badge activa">Activa</span>';
+
+    var dias = diasRestantes(l.expira_en);
+    var diasCls = dias===null?'': dias<0?'dias-bad': dias<30?'dias-warn':'dias-ok';
+    var diasTxt = dias===null?'Sin límite': dias<0?'Caducada hace '+(Math.abs(dias))+' días': dias===0?'Caduca hoy': dias+' días restantes';
+
+    var ultimo = l.ultimo_acceso ? new Date(l.ultimo_acceso).toLocaleDateString('es-ES') : '—';
+    var accesos = l.accesos_totales || 0;
+
+    var btnToggle = l.activa
+      ? '<button class="btn-toggle desactivar" data-cod="'+l.codigo+'" data-act="false">⏸ Desactivar</button>'
+      : '<button class="btn-toggle activar" data-cod="'+l.codigo+'" data-act="true">▶ Activar</button>';
+
+    return '<tr>'
+      +'<td><span class="codigo-tag" title="Clic para copiar" data-cod="'+l.codigo+'">'+l.codigo+'</span></td>'
+      +'<td><div style="font-weight:600">'+(l.cliente_nombre||'—')+'</div>'
+           +'<div style="font-size:11px;color:var(--text3)">'+(l.cliente_email||'')+'</div></td>'
+      +'<td style="font-family:var(--mono);font-size:11px;color:var(--text2)">'+(l.dominio||'—')+'</td>'
+      +'<td>'+badge+'</td>'
+      +'<td><div>'+new Date(l.expira_en).toLocaleDateString('es-ES')+'</div>'
+           +'<div class="dias-restantes '+diasCls+'">'+diasTxt+'</div></td>'
+      +'<td style="font-size:11px;color:var(--text2)">👨‍🏫 '+(l.max_profesores||'—')+'&nbsp;&nbsp;👥 '+(l.max_alumnos||'—')+'</td>'
+      +'<td style="font-size:11px"><div>'+ultimo+'</div><div style="color:var(--text3)">'+accesos+' accesos</div></td>'
+      +'<td><div class="acciones">'
+        +'<button class="btn-edit" data-cod="'+l.codigo+'">✏️ Editar</button>'
+        +btnToggle
+        +'<button class="btn-del" data-cod="'+l.codigo+'">🗑️</button>'
+        +'</div></td>'
+      +'</tr>';
+  }).join('');
+
+  // Eventos
+  document.querySelectorAll('.codigo-tag').forEach(function(el){
+    el.onclick=function(){ navigator.clipboard.writeText(el.dataset.cod).then(function(){ toast('Código copiado ✓'); }); };
+  });
+  document.querySelectorAll('.btn-edit').forEach(function(btn){
+    btn.onclick=function(){ abrirEditarLic(btn.dataset.cod); };
+  });
+  document.querySelectorAll('.btn-toggle').forEach(function(btn){
+    btn.onclick=function(){ toggleLicencia(btn.dataset.cod, btn.dataset.act==='true'); };
+  });
+  document.querySelectorAll('.btn-del').forEach(function(btn){
+    btn.onclick=function(){ eliminarLicencia(btn.dataset.cod); };
+  });
+}
+
+// ── Modal Nueva Licencia ───────────────────────────────────
+document.getElementById('btn-nueva-lic').onclick = function(){
+  _editCodigo = null;
+  document.getElementById('modal-titulo').textContent = 'Nueva licencia';
+  document.getElementById('btn-modal-ok').textContent = 'Crear licencia';
+  ['f-cliente','f-email','f-dominio'].forEach(function(id){ document.getElementById(id).value=''; });
+  document.getElementById('f-dias').value = '365';
+  document.getElementById('f-profs').value = '5';
+  document.getElementById('f-alumnos').value = '200';
+  document.querySelectorAll('.modulos-grid input').forEach(function(cb){ cb.checked=true; });
+  document.getElementById('lic-creada-wrap').classList.add('hidden');
+  document.getElementById('modal-lic').classList.remove('hidden');
+};
+
+function abrirEditarLic(codigo){
+  var l = _licencias.find(function(x){ return x.codigo===codigo; }); if(!l) return;
+  _editCodigo = codigo;
+  document.getElementById('modal-titulo').textContent = 'Editar licencia — '+codigo;
+  document.getElementById('btn-modal-ok').textContent = 'Guardar cambios';
+  document.getElementById('f-cliente').value = l.cliente_nombre||'';
+  document.getElementById('f-email').value = l.cliente_email||'';
+  document.getElementById('f-dominio').value = l.dominio||'';
+  document.getElementById('f-dias').value = diasRestantes(l.expira_en)||365;
+  document.getElementById('f-profs').value = l.max_profesores||5;
+  document.getElementById('f-alumnos').value = l.max_alumnos||200;
+  document.getElementById('lic-creada-wrap').classList.add('hidden');
+  document.getElementById('modal-lic').classList.remove('hidden');
+}
+
+document.getElementById('btn-modal-cancel').onclick=function(){
+  document.getElementById('modal-lic').classList.add('hidden');
+};
+document.getElementById('modal-lic').addEventListener('click',function(e){
+  if(e.target===this) this.classList.add('hidden');
+});
+
+document.getElementById('btn-modal-ok').onclick = async function(){
+  var btn=this; btn.textContent='Guardando...'; btn.disabled=true;
+  try{
+    var modulos = [];
+    document.querySelectorAll('.modulos-grid input:checked').forEach(function(cb){ modulos.push(cb.value); });
+
+    if(_editCodigo){
+      // Editar
+      var resp = await fetch(SERVER_URL+'/admin/licencia/'+_editCodigo, {
+        method:'PUT',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          admin_key: ADMIN_KEY,
+          dias_validez: parseInt(document.getElementById('f-dias').value)||365,
+          max_profesores: parseInt(document.getElementById('f-profs').value)||5,
+          max_alumnos: parseInt(document.getElementById('f-alumnos').value)||200
+        })
+      });
+      if(!resp.ok) throw new Error('Error al actualizar');
+      toast('Licencia actualizada ✓');
+      document.getElementById('modal-lic').classList.add('hidden');
+    }else{
+      // Crear
+      var resp2 = await fetch(SERVER_URL+'/admin/crear', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          admin_key: ADMIN_KEY,
+          cliente_nombre: document.getElementById('f-cliente').value.trim(),
+          cliente_email: document.getElementById('f-email').value.trim(),
+          dominio: document.getElementById('f-dominio').value.trim(),
+          dias_validez: parseInt(document.getElementById('f-dias').value)||365,
+          max_profesores: parseInt(document.getElementById('f-profs').value)||5,
+          max_alumnos: parseInt(document.getElementById('f-alumnos').value)||200,
+          modulos: modulos
+        })
+      });
+      if(!resp2.ok) throw new Error('Error al crear');
+      var data = await resp2.json();
+      document.getElementById('lic-creada-wrap').classList.remove('hidden');
+      document.getElementById('lic-codigo-nuevo').textContent = data.codigo;
+      document.getElementById('lic-codigo-nuevo').onclick = function(){
+        navigator.clipboard.writeText(data.codigo).then(function(){ toast('Código copiado ✓'); });
+      };
+      btn.textContent = 'Crear otra';
+      toast('Licencia creada: '+data.codigo);
+    }
+    await cargarLicencias();
+  }catch(e){ toast('Error: '+e.message); }
+  btn.disabled=false;
+  if(!_editCodigo) btn.textContent='Crear licencia';
+  else btn.textContent='Guardar cambios';
+};
+
+// ── Acciones ───────────────────────────────────────────────
+async function toggleLicencia(codigo, activa){
+  try{
+    var resp = await fetch(SERVER_URL+'/admin/licencia/'+codigo, {
+      method:'PUT',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({admin_key:ADMIN_KEY, activa:activa})
+    });
+    if(!resp.ok) throw new Error('Error');
+    toast(activa?'Licencia activada ✓':'Licencia desactivada');
+    await cargarLicencias();
+  }catch(e){ toast('Error: '+e.message); }
+}
+
+async function eliminarLicencia(codigo){
+  if(!confirm('¿Eliminar licencia '+codigo+'? Esta acción no se puede deshacer.')) return;
+  try{
+    var resp = await fetch(SERVER_URL+'/admin/licencia/'+codigo+'?admin_key='+encodeURIComponent(ADMIN_KEY), {method:'DELETE'});
+    if(!resp.ok) throw new Error('Error');
+    toast('Licencia eliminada');
+    await cargarLicencias();
+  }catch(e){ toast('Error: '+e.message); }
+}
+
+// ── Toast ──────────────────────────────────────────────────
+function toast(msg){
+  document.querySelectorAll('.toast').forEach(function(t){t.remove();});
+  var t=document.createElement('div'); t.className='toast'; t.textContent=msg;
+  document.body.appendChild(t); setTimeout(function(){t.remove();},3500);
+}
+</script>
+</body>
+</html>
