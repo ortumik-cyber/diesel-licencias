@@ -26,13 +26,8 @@ FIRESTORE_URL     = f"https://firestore.googleapis.com/v1/projects/{FIREBASE_PRO
 app = FastAPI(title="Diesel Licencias API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "https://ortumik-cyber.github.io",
-        "http://localhost",
-        "http://127.0.0.1",
-        "*"
-    ],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
